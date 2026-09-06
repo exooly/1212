@@ -1,0 +1,25 @@
+-- KPSS Koç: Kullanıcı verilerini hesaba bağlı saklamak için gerekli tablo.
+-- Bu kodu Supabase panelinde "SQL Editor" sayfasına yapıştırıp "Run" ile çalıştırın.
+
+create table if not exists public.user_states (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_states enable row level security;
+
+-- Her kullanıcı sadece kendi verisini görebilsin.
+create policy "Kullanıcı kendi verisini görebilir"
+  on public.user_states for select
+  using (auth.uid() = user_id);
+
+-- Her kullanıcı sadece kendi verisini oluşturabilsin.
+create policy "Kullanıcı kendi verisini oluşturabilir"
+  on public.user_states for insert
+  with check (auth.uid() = user_id);
+
+-- Her kullanıcı sadece kendi verisini güncelleyebilsin.
+create policy "Kullanıcı kendi verisini güncelleyebilir"
+  on public.user_states for update
+  using (auth.uid() = user_id);
